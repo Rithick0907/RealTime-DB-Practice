@@ -3,13 +3,25 @@ import * as Yup from "yup";
 import { SubmitButton as Button, CustomForm, Input } from "./form";
 
 import { Modal } from "react-bootstrap";
+import axios from "axios";
 
 const validationSchema = Yup.object().shape({
   movieName: Yup.string().required().label("Movie Name"),
   review: Yup.string().required().label("Review"),
 });
 
-const handleSubmit = (values) => console.log(values);
+const handleSubmit = async (values) => {
+  const result = await axios({
+    method: "POST",
+    url: "https://practice-realtime-db-default-rtdb.firebaseio.com/movieReview.json",
+    data: values,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  console.log(result);
+};
 
 const CustomModal = ({ show, handleShow }) => {
   return (
