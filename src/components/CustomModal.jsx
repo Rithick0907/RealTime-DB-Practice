@@ -1,29 +1,35 @@
 import * as Yup from "yup";
 
 import { SubmitButton as Button, CustomForm, Input } from "./form";
+import { baseURL, http } from "../services/httpService";
 
 import { Modal } from "react-bootstrap";
-import axios from "axios";
 
 const validationSchema = Yup.object().shape({
   movieName: Yup.string().required().label("Movie Name"),
   review: Yup.string().required().label("Review"),
 });
 
-const handleSubmit = async (values) => {
-  const result = await axios({
-    method: "POST",
-    url: "https://practice-realtime-db-default-rtdb.firebaseio.com/movieReview.json",
-    data: values,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  console.log(result);
-};
-
-const CustomModal = ({ show, handleShow }) => {
+const CustomModal = ({ show, handleShow, setMovies }) => {
+  const handleSubmit = async (values) => {
+    handleShow();
+    setMovies((prevState) => {
+      prevState.push(values);
+      return prevState;
+    });
+    try {
+      await http({
+        method: "POST",
+        url: baseURL + "movieReview.json",
+        data: values,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
   return (
     <Modal show={show} onHide={handleShow} size="lg" centered>
       <Modal.Header>
@@ -35,7 +41,12 @@ const CustomModal = ({ show, handleShow }) => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          <Input name="movieName" type="text" className="my-3" />
+          <Input
+            name="movieName"
+            type="text"
+            className="my-3"
+            autoComplete="off"
+          />
           <Input name="review" as="textarea" rows={3} className="mb-3" />
           <Button onClick={handleShow} title="Add Review" />
         </CustomForm>
