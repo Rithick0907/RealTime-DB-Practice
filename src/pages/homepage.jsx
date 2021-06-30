@@ -1,6 +1,7 @@
 import { Button, Container, Table } from "react-bootstrap";
-import { baseURL, http } from "../services/httpService";
-import { useCallback, useEffect, useState } from "react";
+import { baseURL } from "../services/httpService";
+import { useEffect, useState } from "react";
+import useHttp from "../custom-hooks/useHttp";
 
 import CustomModal from "../components/CustomModal";
 
@@ -9,46 +10,45 @@ const Homepage = () => {
   const [showUpdate, setShowUpdate] = useState(false);
   const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const { sendRequest } = useHttp();
 
   const handleShow = () => setShow((prevState) => !prevState);
 
   const handleShowUpdate = () => setShowUpdate((prevState) => !prevState);
 
-  const addReview = async (values) => {
+  const addReview = (values) => {
     handleShow();
     setMovies((prevState) => {
       prevState.push(values);
       return prevState;
     });
-    try {
-      await http({
-        method: "POST",
-        url: baseURL + "movieReview.json",
-        data: values,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    sendRequest({
+      method: "POST",
+      url: baseURL + "movieReview.json",
+      data: values,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
   };
 
-  const fetchReview = useCallback(async () => {
-    try {
-      const { data } = await http({
-        method: "GET",
-        url: baseURL + "movieReview.json",
-      });
-      const temp = [];
-      for (const key in data) {
-        temp.push({ movieID: key, ...data[key] });
-      }
-      setMovies((prevState) => temp);
-    } catch (e) {
-      console.log(e);
+  const renderDisplay = (data) => {
+    const temp = [];
+    for (const key in data) {
+      temp.push({ movieID: key, ...data[key] });
     }
-  }, []);
+    setMovies((prevState) => temp);
+  };
+
+  const fetchReview = () => {
+    sendRequest(
+      {
+        method: "GET",
+        url: baseURL + "movieReview.json"
+      },
+      renderDisplay
+    );
+  };
 
   const handleUpdate = (movieID) => {
     setSelectedMovie((prevState) => movieID);
@@ -57,26 +57,18 @@ const Homepage = () => {
 
   const updateReview = async (values) => {
     handleShowUpdate();
-    try {
-      await http({
-        method: "PATCH",
-        url: `${baseURL}movieReview/${selectedMovie}.json`,
-        data: values,
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    sendRequest({
+      method: "PATCH",
+      url: `${baseURL}movieReview/${selectedMovie}.json`,
+      data: values
+    });
   };
 
-  const deleteReview = async (movieID) => {
-    try {
-      await http({
-        method: "DELETE",
-        url: `${baseURL}movieReview/${movieID}.json`,
-      });
-    } catch (e) {
-      console.log(e);
-    }
+  const deleteReview = (movieID) => {
+    sendRequest({
+      method: "DELETE",
+      url: `${baseURL}movieReview/${movieID}.json`
+    });
   };
 
   useEffect(() => {
