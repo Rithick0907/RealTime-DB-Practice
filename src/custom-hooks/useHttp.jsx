@@ -17,9 +17,10 @@ const useHttp = () => {
         ...otherConfig
       });
       if (applyData) applyData(data);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
+    setIsLoading(false);
   }, []);
 
   return {
