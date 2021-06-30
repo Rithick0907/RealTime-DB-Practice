@@ -1,54 +1,60 @@
 import * as Yup from "yup";
 
 import { SubmitButton as Button, CustomForm, Input } from "./form";
-import { baseURL, http } from "../services/httpService";
 
 import { Modal } from "react-bootstrap";
 
-const validationSchema = Yup.object().shape({
-  movieName: Yup.string().required().label("Movie Name"),
-  review: Yup.string().required().label("Review"),
-});
+const CustomModal = ({
+  show,
+  title,
+  isUpdateModal,
+  handleShow,
+  handleSubmit,
+}) => {
+  let initialValues = {};
+  let validationSchema = {};
+  if (!isUpdateModal) {
+    initialValues = { movieName: "", review: "" };
 
-const CustomModal = ({ show, handleShow, setMovies }) => {
-  const handleSubmit = async (values) => {
-    handleShow();
-    setMovies((prevState) => {
-      prevState.push(values);
-      return prevState;
+    validationSchema = Yup.object().shape({
+      movieName: Yup.string().required().label("Movie Name"),
+      review: Yup.string().required().label("Review"),
     });
-    try {
-      await http({
-        method: "POST",
-        url: baseURL + "movieReview.json",
-        data: values,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  };
+  } else {
+    initialValues = { review: "" };
+
+    validationSchema = Yup.object().shape({
+      review: Yup.string().required().label("Review"),
+    });
+  }
   return (
     <Modal show={show} onHide={handleShow} size="lg" centered>
       <Modal.Header>
-        <Modal.Title>Add Movie Review</Modal.Title>
+        <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <CustomForm
-          initialValues={{ movieName: "", review: "" }}
+          initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
+          {!isUpdateModal ? (
+            <Input
+              name="movieName"
+              type="text"
+              className="my-3"
+              autoComplete="off"
+              placeholder="Movie Name"
+            />
+          ) : null}
           <Input
-            name="movieName"
-            type="text"
-            className="my-3"
-            autoComplete="off"
+            name="review"
+            as="textarea"
+            rows={3}
+            className="mb-3"
+            placeholder="Add your Review..."
           />
-          <Input name="review" as="textarea" rows={3} className="mb-3" />
-          <Button onClick={handleShow} title="Add Review" />
+          <Button onClick={handleSubmit} title="Add Review" />
         </CustomForm>
       </Modal.Body>
     </Modal>

@@ -6,11 +6,35 @@ import CustomModal from "../components/CustomModal";
 
 const Homepage = () => {
   const [show, setShow] = useState(false);
+  const [showUpdate, setShowUpdate] = useState(false);
   const [movies, setMovies] = useState([]);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   const handleShow = () => setShow((prevState) => !prevState);
 
-  const fetchMoviesReview = useCallback(async () => {
+  const handleShowUpdate = () => setShowUpdate((prevState) => !prevState);
+
+  const addReview = async (values) => {
+    handleShow();
+    setMovies((prevState) => {
+      prevState.push(values);
+      return prevState;
+    });
+    try {
+      await http({
+        method: "POST",
+        url: baseURL + "movieReview.json",
+        data: values,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const fetchReview = useCallback(async () => {
     try {
       const { data } = await http({
         method: "GET",
@@ -26,24 +50,41 @@ const Homepage = () => {
     }
   }, []);
 
-  const deleteMovie = async (movieID) => {
+  const handleUpdate = (movieID) => {
+    setSelectedMovie((prevState) => movieID);
+    handleShowUpdate();
+  };
+
+  const updateReview = async (values) => {
+    handleShowUpdate();
     try {
-      const response = await http({
+      await http({
+        method: "PATCH",
+        url: `${baseURL}movieReview/${selectedMovie}.json`,
+        data: values,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const deleteReview = async (movieID) => {
+    try {
+      await http({
         method: "DELETE",
         url: `${baseURL}movieReview/${movieID}.json`,
       });
-      console.log(response);
     } catch (e) {
       console.log(e);
     }
   };
 
   useEffect(() => {
-    fetchMoviesReview();
-  }, [fetchMoviesReview, movies]);
+    fetchReview();
+  }, [fetchReview, movies]);
 
   return (
-    <Container fluid className="pt-3">
+    <Container fluid className="py-4">
       <Table bordered hover>
         <thead>
           <tr className="text-center">
@@ -59,11 +100,16 @@ const Homepage = () => {
               <td>{movie.movieName}</td>
               <td>{movie.review}</td>
               <td>
-                <Button className="btn-secondary">Update</Button>
+                <Button
+                  onClick={() => handleUpdate(movie.movieID)}
+                  className="btn-secondary"
+                >
+                  Update
+                </Button>
               </td>
               <td>
                 <Button
-                  onClick={() => deleteMovie(movie.movieID)}
+                  onClick={() => deleteReview(movie.movieID)}
                   className="btn-danger"
                 >
                   Delete
@@ -76,7 +122,19 @@ const Homepage = () => {
       <div className="text-center">
         <Button onClick={handleShow}>Add Review</Button>
       </div>
-      <CustomModal show={show} handleShow={handleShow} setMovies={setMovies} />
+      <CustomModal
+        title="Add Movie Review"
+        show={show}
+        handleShow={handleShow}
+        handleSubmit={addReview}
+      />
+      <CustomModal
+        title="Update Movie Review"
+        isUpdateModal={selectedMovie}
+        show={showUpdate}
+        handleShow={handleShowUpdate}
+        handleSubmit={updateReview}
+      />
     </Container>
   );
 };
